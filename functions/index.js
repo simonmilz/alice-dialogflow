@@ -1,15 +1,15 @@
 'use strict';
 
 const functions = require('firebase-functions');
-const Queue = require('bull');
 const { WebhookClient } = require('dialogflow-fulfillment');
+const Queue = require('bull');
 
-const nameOfQueue = 'alice';
-const HomeAutomationQueue = new Queue(nameOfQueue, functions.config().queue.uri);
+const config = functions.config();
+const JamesQueue = new Queue(config.queue.name, config.queue.uri);
 
 process.env.DEBUG = 'dialogflow:debug';
 
-exports.aliceFulfillment = functions.https.onRequest((request, response) => {
+exports.jamesFulfillment = functions.https.onRequest((request, response) => {
 	const agent = new WebhookClient({ request, response });
 	console.log('Dialogflow Request headers: ' + JSON.stringify(request.headers));
 	console.log('Dialogflow Request body: ' + JSON.stringify(request.body));
@@ -27,7 +27,8 @@ exports.aliceFulfillment = functions.https.onRequest((request, response) => {
 	// uncomment `intentMap.set('your intent name here', yourFunctionHandler);`
 	// below to get this function to be run when a Dialogflow intent is matched
 	function sendToQueue(agent) {
-		HomeAutomationQueue.add(request.body);
+		JamesQueue.add(request.body);
+		agent.add(request.body.result.fulfillment.speech);
 	}
 
 	// Run the proper function handler based on the matched Dialogflow intent name
